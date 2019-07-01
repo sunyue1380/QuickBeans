@@ -32,7 +32,6 @@ public class PackageUtil {
             if("file".equals(url.getProtocol())){
                 File file = new File(url.getFile());
                 //TODO 对于有空格或者中文路径会无法识别
-                logger.info("[扫描路径]{}",file.getAbsolutePath());
                 if(!file.isDirectory()){
                     throw new IllegalArgumentException("包名不是合法的文件夹!"+url.getFile());
                 }
