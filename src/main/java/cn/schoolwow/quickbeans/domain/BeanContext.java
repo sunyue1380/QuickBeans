@@ -14,6 +14,10 @@ public class BeanContext {
     public Class _class;
     /**所在方法*/
     public Method method;
+    /**初始化方法*/
+    public Method initMethod;
+    /**销毁方法*/
+    public Method destroyMethod;
     /**依赖是否已注入*/
     public boolean hasInject;
 

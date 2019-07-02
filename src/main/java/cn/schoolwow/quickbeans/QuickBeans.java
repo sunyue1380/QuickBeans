@@ -120,6 +120,7 @@ public class QuickBeans {
                 instance = beanContext._class.newInstance();
             }
             logger.debug("[原型-新建实例]名称:{},实例:{}",name,instance);
+            doInitialized(instance,beanContext);
         }else{
             instance = beanContext.instance;
         }
@@ -146,6 +147,14 @@ public class QuickBeans {
                 beanContext.instance = beanContext._class.newInstance();
             }
             logger.debug("[新建实例]名称:{},实例:{}",names,beanContext.instance);
+            doInitialized(beanContext.instance,beanContext);
+        }
+    }
+
+    //初始化
+    private void doInitialized(Object instance,BeanContext beanContext) throws Exception{
+        if(beanContext.initMethod!=null){
+            beanContext.initMethod.invoke(instance);
         }
     }
 
@@ -228,6 +237,13 @@ public class QuickBeans {
             Scope scope = method.getDeclaredAnnotation(Scope.class);
             if(scope!=null){
                 beanContext.scopeType = scope.value();
+            }
+            //处理初始化方法和销毁方法
+            if(!bean.initMethod().isEmpty()){
+                beanContext.initMethod = method.getReturnType().getDeclaredMethod(bean.initMethod());
+            }
+            if(!bean.destroyMethod().isEmpty()){
+                beanContext.destroyMethod = method.getReturnType().getDeclaredMethod(bean.destroyMethod());
             }
             List<String> nameList = new ArrayList<>();
             if(!bean.name().isEmpty()){

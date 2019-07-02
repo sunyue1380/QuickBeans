@@ -34,4 +34,11 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public void init(){
+        System.out.println("调用了User类的初始化方法!");
+    }
+    public void destroy(){
+        System.out.println("调用了User类的销毁方法!");
+    }
 }

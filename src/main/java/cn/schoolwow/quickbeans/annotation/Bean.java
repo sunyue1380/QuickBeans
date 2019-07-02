@@ -11,4 +11,8 @@ import java.lang.annotation.Target;
 public @interface Bean {
     /**名称*/
     String name() default "";
+    /**初始化方法*/
+    String initMethod() default "";
+    /**销毁方法*/
+    String destroyMethod() default "";
 }

@@ -13,7 +13,7 @@ public class BeanConfig {
     @Resource
     private User user;
 
-    @Bean(name = "myUser")
+    @Bean(name = "myUser",initMethod = "init",destroyMethod = "destroy")
     public User user(){
         return new User();
     }
