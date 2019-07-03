@@ -18,6 +18,8 @@ public class QuickBeans {
     private final Map<String,BeanContext> beanMap = new HashMap<>();
     /**当前是否是刷新状态*/
     private boolean isRefresh = false;
+    /**存在已经扫描过的类,防止重复扫描*/
+    private List<String> scanedClassList = new ArrayList<>();
 
     /**获取Bean*/
     public Object getBean(String name){
@@ -130,6 +132,10 @@ public class QuickBeans {
 
     /**扫描类*/
     private void doScan(Class c) throws Exception {
+        if(scanedClassList.contains(c.getName())){
+            return;
+        }
+        scanedClassList.add(c.getName());
         handleComponent(c);
         handleBean(c);
         handleComponentScan(c);

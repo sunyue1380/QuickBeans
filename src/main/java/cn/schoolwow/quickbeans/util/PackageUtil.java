@@ -24,46 +24,47 @@ public class PackageUtil {
         List<Class> classList = new ArrayList<>();
         String packageNamePath = packageName.replace(".", "/");
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL url = classLoader.getResource(packageNamePath);
-        if(url==null){
-            throw new IllegalArgumentException("无法识别的包路径:"+packageNamePath);
-        }
         try {
-            if("file".equals(url.getProtocol())){
-                File file = new File(url.getFile());
-                //TODO 对于有空格或者中文路径会无法识别
-                if(!file.isDirectory()){
-                    throw new IllegalArgumentException("包名不是合法的文件夹!"+url.getFile());
-                }
-                Stack<File> stack = new Stack<>();
-                stack.push(file);
+            Enumeration<URL> urlEnumeration = classLoader.getResources(packageNamePath);
+            while(urlEnumeration.hasMoreElements()){
+                URL url = urlEnumeration.nextElement();
+                if("file".equals(url.getProtocol())){
+                    File file = new File(url.getFile());
+                    //TODO 对于有空格或者中文路径会无法识别
+                    logger.info("[扫描路径]{}",file.getAbsolutePath());
+                    if(!file.isDirectory()){
+                        throw new IllegalArgumentException("包名不是合法的文件夹!"+url.getFile());
+                    }
+                    Stack<File> stack = new Stack<>();
+                    stack.push(file);
 
-                String indexOfString = packageName.replace(".","/");
-                while(!stack.isEmpty()){
-                    file = stack.pop();
-                    for(File f:file.listFiles()){
-                        if(f.isDirectory()){
-                            stack.push(f);
-                        }else if(f.isFile()&&f.getName().endsWith(".class")){
-                            String path = f.getAbsolutePath().replace("\\","/");
-                            int startIndex = path.indexOf(indexOfString);
-                            String className = path.substring(startIndex,path.length()-6).replace("/",".");
-                            classList.add(Class.forName(className));
+                    String indexOfString = packageName.replace(".","/");
+                    while(!stack.isEmpty()){
+                        file = stack.pop();
+                        for(File f:file.listFiles()){
+                            if(f.isDirectory()){
+                                stack.push(f);
+                            }else if(f.isFile()&&f.getName().endsWith(".class")){
+                                String path = f.getAbsolutePath().replace("\\","/");
+                                int startIndex = path.indexOf(indexOfString);
+                                String className = path.substring(startIndex,path.length()-6).replace("/",".");
+                                classList.add(Class.forName(className));
+                            }
                         }
                     }
-                }
-            }else if("jar".equals(url.getProtocol())){
-                JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
-                if (null != jarURLConnection) {
-                    JarFile jarFile = jarURLConnection.getJarFile();
-                    if (null != jarFile) {
-                        Enumeration<JarEntry> jarEntries = jarFile.entries();
-                        while (jarEntries.hasMoreElements()) {
-                            JarEntry jarEntry = jarEntries.nextElement();
-                            String jarEntryName = jarEntry.getName();
-                            if (jarEntryName.contains(packageNamePath) && jarEntryName.endsWith(".class")) {
-                                String className = jarEntryName.substring(0, jarEntryName.lastIndexOf(".")).replaceAll("/", ".");
-                                classList.add(Class.forName(className));
+                }else if("jar".equals(url.getProtocol())){
+                    JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
+                    if (null != jarURLConnection) {
+                        JarFile jarFile = jarURLConnection.getJarFile();
+                        if (null != jarFile) {
+                            Enumeration<JarEntry> jarEntries = jarFile.entries();
+                            while (jarEntries.hasMoreElements()) {
+                                JarEntry jarEntry = jarEntries.nextElement();
+                                String jarEntryName = jarEntry.getName();
+                                if (jarEntryName.contains(packageNamePath) && jarEntryName.endsWith(".class")) {
+                                    String className = jarEntryName.substring(0, jarEntryName.lastIndexOf(".")).replaceAll("/", ".");
+                                    classList.add(Class.forName(className));
+                                }
                             }
                         }
                     }

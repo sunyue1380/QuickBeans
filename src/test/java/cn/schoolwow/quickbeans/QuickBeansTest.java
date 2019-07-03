@@ -21,7 +21,7 @@ public class QuickBeansTest {
         String[] expectNames = {
                 "cn.schoolwow.quickbeans.controller.IndexController",
                 "cn.schoolwow.quickbeans.service.IndexService",
-                "cn.schoolwow.quickbeans.service.IndexServiceImpl",
+                "cn.schoolwow.quickbeans.service.impl.IndexServiceImpl",
                 "cn.schoolwow.quickbeans.config.BeanConfig",
         };
         Set<String> beanNameSet = quickBeans.getBeanNameSet();
