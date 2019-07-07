@@ -6,16 +6,18 @@ import cn.schoolwow.quickbeans.util.PackageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class QuickBeans {
     private static Logger logger = LoggerFactory.getLogger(QuickBeans.class);
-    /**存放对象*/
-    private final Map<String,BeanContext> beanMap = new HashMap<>();
+    /**存放BeanContext列表*/
+    private final List<BeanContext> beanContextList = new ArrayList<>();
     /**当前是否是刷新状态*/
     private boolean isRefresh = false;
     /**存在已经扫描过的类,防止重复扫描*/
@@ -34,7 +36,7 @@ public class QuickBeans {
     /**获取Bean*/
     public <T> T getBean(Class<T> _class){
         try {
-            return _class.cast(doGetBean(_class.getName()));
+            return getBean(_class,_class.getName());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,18 +54,57 @@ public class QuickBeans {
     }
 
     /**获取Bean*/
-    public Set<String> getBeanNameSet(){
-        return beanMap.keySet();
+    public List<Object> getBeanList(String name){
+        try {
+            return doGetBeanList(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**获取Bean*/
+    public <T> List<T> getBeanList(Class<T> _class){
+        return getBeanList(_class,_class.getName());
+    }
+
+    /**获取Bean*/
+    public <T> List<T> getBeanList(Class<T> _class ,String name){
+        try {
+            List<Object> objectList = doGetBeanList(name);
+            List<T> beanList = new ArrayList<>();
+            for(Object o:objectList){
+                beanList.add(_class.cast(o));
+            }
+            return beanList;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**获取Bean*/
+    public List<String> getBeanNameList(){
+        List<String> beanNameList = new ArrayList<>();
+        for(BeanContext beanContext:this.beanContextList){
+            beanNameList.addAll(beanContext.nameList);
+        }
+        return beanNameList;
     }
 
     /**依赖注入*/
     public void refresh(){
         try {
             isRefresh = true;
-            for(BeanContext beanContext:beanMap.values()){
+            for(BeanContext beanContext:beanContextList){
                 if(beanContext.scopeType.equals(ScopeType.singleton)&&!beanContext.hasInject){
                     doInject(beanContext.instance);
                     beanContext.hasInject = true;
+                }
+            }
+            for(BeanContext beanContext:beanContextList){
+                if(beanContext.scopeType.equals(ScopeType.singleton)){
+                    doInitialized(beanContext.instance,beanContext);
                 }
             }
             isRefresh = false;
@@ -109,25 +150,40 @@ public class QuickBeans {
 
     /**实际获取Bean的方法*/
     private Object doGetBean(String name) throws Exception{
-        BeanContext beanContext = beanMap.get(name);
-        if(beanContext==null){
+        List<Object> beanList = doGetBeanList(name);
+        if(beanList.size()>0){
+            return beanList.get(0);
+        }else{
             return null;
         }
-        //原型模式创建
-        Object instance = null;
-        if(beanContext.scopeType.equals(ScopeType.prototype)){
-            if(beanContext.method!=null){
-                instance = beanContext.method.invoke(beanContext._class.newInstance());
-            }else if(beanContext._class!=null){
-                instance = beanContext._class.newInstance();
+    }
+
+    /**实际获取Bean的方法*/
+    private List<Object> doGetBeanList(String name) throws Exception{
+        List<Object> beanList = new ArrayList<>();
+        for(BeanContext beanContext:this.beanContextList){
+            if(!beanContext.nameList.contains(name)){
+                continue;
             }
-            logger.debug("[原型-新建实例]名称:{},实例:{}",name,instance);
-            doInitialized(instance,beanContext);
-        }else{
-            instance = beanContext.instance;
+            //原型模式创建
+            Object instance = null;
+            if(beanContext.scopeType.equals(ScopeType.prototype)){
+                if(beanContext.method!=null){
+                    instance = beanContext.method.invoke(beanContext._class.newInstance());
+                }else if(beanContext._class!=null){
+                    instance = beanContext._class.newInstance();
+                }
+                logger.debug("[原型-新建实例]名称:{},实例:{}",name,instance);
+            }else{
+                instance = beanContext.instance;
+                if(!beanContext.hasInject){
+                    doInject(beanContext.instance);
+                }
+            }
+            doInject(instance);
+            beanList.add(instance);
         }
-        doInject(instance);
-        return instance;
+        return beanList;
     }
 
     /**扫描类*/
@@ -142,19 +198,17 @@ public class QuickBeans {
     }
 
     /**创建实例*/
-    private void doCreate(String[] names,BeanContext beanContext) throws Exception {
-        for(String name:names){
-            beanMap.put(name,beanContext);
-        }
+    private void doCreate(List<String> nameList,BeanContext beanContext) throws Exception {
+        beanContext.nameList = nameList;
         if(beanContext.scopeType.equals(ScopeType.singleton)){
             if(beanContext.method!=null){
                 beanContext.instance = beanContext.method.invoke(beanContext._class.newInstance());
             }else if(beanContext._class!=null){
                 beanContext.instance = beanContext._class.newInstance();
             }
-            logger.debug("[新建实例]名称:{},实例:{}",names,beanContext.instance);
-            doInitialized(beanContext.instance,beanContext);
+            logger.debug("[新建实例]名称:{},实例:{}",nameList,beanContext.instance);
         }
+        this.beanContextList.add(beanContext);
     }
 
     //初始化
@@ -179,31 +233,65 @@ public class QuickBeans {
             if(resource==null){
                 continue;
             }
-            BeanContext beanContext = beanMap.get(field.getType().getName());
+            BeanContext injectBeanContext = null;
+            String name = resource.name();
+            if(!name.isEmpty()){
+                injectBeanContext = getBeanContext(name);
+            }
+            if(injectBeanContext==null){
+                injectBeanContext = getBeanContext(field.getName());
+            }
+            if(injectBeanContext==null){
+                injectBeanContext = getBeanContext(field.getType().getName());
+            }
+            if(injectBeanContext==null){
+                throw new IllegalArgumentException("无法找到依赖!类名:"+c.getName()+",依赖:"+field.getName());
+            }
             //刷新状态下忽略原型模式成员变量
-            if(isRefresh&&beanContext.scopeType.equals(ScopeType.prototype)){
+            if(isRefresh&&injectBeanContext.scopeType.equals(ScopeType.prototype)){
                 continue;
             }
             //单例模式且值为null或者原型模式时创建实例
-            if((beanContext.scopeType.equals(ScopeType.singleton)&&field.get(instance)==null
-            )||beanContext.scopeType.equals(ScopeType.prototype)){
+            if((injectBeanContext.scopeType.equals(ScopeType.singleton)&&field.get(instance)==null
+            )||injectBeanContext.scopeType.equals(ScopeType.prototype)){
                 Object bean = null;
-                //先根据resource定义的name
-                String resourceName = resource.name();
-                if(!resourceName.isEmpty()){
-                    bean = doGetBean(resourceName);
+                if(field.getType().isArray()||field.getType().getName().equals("java.util.List")){
+                    //先根据resource定义的name
+                    String resourceName = resource.name();
+                    if(!resourceName.isEmpty()){
+                        bean = doGetBeanList(resourceName);
+                    }
+                    //根据成员变量名
+                    if(bean==null){
+                        resourceName = field.getName();
+                        bean = doGetBeanList(resourceName);
+                    }
+                    //根据类型名
+                    if(bean==null){
+                        resourceName = field.getType().getName();
+                        bean = doGetBeanList(resourceName);
+                    }
+                    if(field.getType().isArray()){
+                        List<Object> objectList = (List<Object>) bean;
+                        bean = objectList.toArray(new Object[0]);
+                    }
+                }else{
+                    //先根据resource定义的name
+                    String resourceName = resource.name();
+                    if(!resourceName.isEmpty()){
+                        bean = doGetBean(resourceName);
+                    }
+                    //根据成员变量名
+                    if(bean==null){
+                        resourceName = field.getName();
+                        bean = doGetBean(resourceName);
+                    }
+                    //根据类型名
+                    if(bean==null){
+                        resourceName = field.getType().getName();
+                        bean = doGetBean(resourceName);
+                    }
                 }
-                //根据成员变量名
-                if(bean==null){
-                    resourceName = field.getName();
-                    bean = doGetBean(resourceName);
-                }
-                //根据类型名
-                if(bean==null){
-                    resourceName = field.getType().getName();
-                    bean = doGetBean(resourceName);
-                }
-
                 if(bean==null){
                     throw new IllegalArgumentException("依赖为空!类名:"+c.getName()+",依赖:"+field.getName());
                 }
@@ -257,7 +345,7 @@ public class QuickBeans {
             }
             nameList.add(method.getName());
             nameList.add(method.getReturnType().getName());
-            doCreate(nameList.toArray(new String[0]),beanContext);
+            doCreate(nameList,beanContext);
         }
     }
 
@@ -273,6 +361,12 @@ public class QuickBeans {
         if(scope!=null){
             beanContext.scopeType = scope.value();
         }
+        Method[] methods = c.getDeclaredMethods();
+        for(Method method:methods){
+            if(beanContext.initMethod==null&&method.getAnnotation(PostConstruct.class)!=null){
+                beanContext.initMethod = method;
+            }
+        }
         List<String> nameList = new ArrayList<>();
         if(!component.name().isEmpty()){
             nameList.add(component.name());
@@ -282,6 +376,15 @@ public class QuickBeans {
             nameList.add(_class.getName());
         }
         nameList.add(c.getName());
-        doCreate(nameList.toArray(new String[0]),beanContext);
+        doCreate(nameList,beanContext);
+    }
+
+    private BeanContext getBeanContext(String name){
+        for(BeanContext beanContext:this.beanContextList){
+            if(beanContext.nameList.contains(name)){
+                return beanContext;
+            }
+        }
+        return null;
     }
 }

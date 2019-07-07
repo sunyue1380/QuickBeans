@@ -3,12 +3,13 @@ package cn.schoolwow.quickbeans;
 import cn.schoolwow.quickbeans.config.BeanConfig;
 import cn.schoolwow.quickbeans.entity.Talk;
 import cn.schoolwow.quickbeans.entity.User;
+import cn.schoolwow.quickbeans.signer.SignerHolder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.List;
 
 public class QuickBeansTest {
     private Logger logger = LoggerFactory.getLogger(QuickBeansTest.class);
@@ -24,7 +25,7 @@ public class QuickBeansTest {
                 "cn.schoolwow.quickbeans.service.impl.IndexServiceImpl",
                 "cn.schoolwow.quickbeans.config.BeanConfig",
         };
-        Set<String> beanNameSet = quickBeans.getBeanNameSet();
+        List<String> beanNameSet = quickBeans.getBeanNameList();
         for(String expectName:expectNames){
             Assert.assertEquals(true,beanNameSet.contains(expectName));
         }
@@ -52,5 +53,17 @@ public class QuickBeansTest {
         Talk talk2 = quickBeans.getBean(Talk.class,"talk");
         User user2 = talk2.getUser();
         Assert.assertEquals(true,user1!=user2);
+    }
+
+    @Test
+    public void testGetBeanList() throws Exception{
+        QuickBeans quickBeans = new QuickBeans();
+        quickBeans.scan("cn.schoolwow.quickbeans.signer");
+        quickBeans.refresh();
+
+        List<Object> signerList = quickBeans.getBeanList("signer");
+        Assert.assertEquals(2,signerList.size());
+        SignerHolder signerHolder = quickBeans.getBean(SignerHolder.class);
+        Assert.assertEquals(true,signerHolder.signerList!=null);
     }
 }

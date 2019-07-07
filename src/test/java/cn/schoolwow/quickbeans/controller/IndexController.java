@@ -5,6 +5,7 @@ import cn.schoolwow.quickbeans.service.IndexService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 @Component
@@ -19,5 +20,10 @@ public class IndexController {
     ){
         logger.info("[注册用户]用户名:{},密码:{}",username,password);
         return indexService.register(username,password);
+    }
+
+    @PostConstruct
+    public void init(){
+        logger.info("[初始化]执行IndexController的初始化方法!");
     }
 }

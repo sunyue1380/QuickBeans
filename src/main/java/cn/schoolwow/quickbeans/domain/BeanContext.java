@@ -3,9 +3,12 @@ package cn.schoolwow.quickbeans.domain;
 import cn.schoolwow.quickbeans.annotation.ScopeType;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**Bean信息*/
 public class BeanContext {
+    /**名称*/
+    public List<String> nameList;
     /**范围类型*/
     public ScopeType scopeType = ScopeType.singleton;
     /**单例*/
@@ -20,15 +23,6 @@ public class BeanContext {
     public Method destroyMethod;
     /**依赖是否已注入*/
     public boolean hasInject;
-
-    @Override
-    public String toString() {
-        return "BeanContext{" +
-                "scopeType=" + scopeType +
-                ", instance=" + instance +
-                ", _class=" + _class +
-                ", method=" + method +
-                ", hasInject=" + hasInject +
-                '}';
-    }
+    /**初始化是否已调用过*/
+    public boolean hasInitialized;
 }
