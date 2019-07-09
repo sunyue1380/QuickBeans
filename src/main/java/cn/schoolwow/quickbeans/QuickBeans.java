@@ -9,10 +9,14 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class QuickBeans {
     private static Logger logger = LoggerFactory.getLogger(QuickBeans.class);
@@ -22,6 +26,8 @@ public class QuickBeans {
     private boolean isRefresh = false;
     /**存在已经扫描过的类,防止重复扫描*/
     private List<String> scanedClassList = new ArrayList<>();
+    /**定时任务线程池*/
+    private ScheduledExecutorService scheduledPool = Executors.newSingleThreadScheduledExecutor();
 
     /**获取Bean*/
     public Object getBean(String name){
@@ -216,6 +222,21 @@ public class QuickBeans {
         if(beanContext.initMethod!=null){
             beanContext.initMethod.invoke(instance);
         }
+        //定时任务只对单例模式有效
+        if(beanContext.scopeType.equals(ScopeType.singleton)){
+            for(Method method:beanContext.scheduledMethodList){
+                Scheduled scheduled = method.getDeclaredAnnotation(Scheduled.class);
+                scheduledPool.scheduleWithFixedDelay(()->{
+                    try {
+                        method.invoke(beanContext.instance);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                },scheduled.initialDelay(),scheduled.fixedDelay(), TimeUnit.MILLISECONDS);
+            }
+        }
     }
 
     /**注入依赖*/
@@ -365,6 +386,10 @@ public class QuickBeans {
         for(Method method:methods){
             if(beanContext.initMethod==null&&method.getAnnotation(PostConstruct.class)!=null){
                 beanContext.initMethod = method;
+            }
+            Scheduled scheduled = method.getDeclaredAnnotation(Scheduled.class);
+            if(scheduled!=null){
+                beanContext.scheduledMethodList.add(method);
             }
         }
         List<String> nameList = new ArrayList<>();

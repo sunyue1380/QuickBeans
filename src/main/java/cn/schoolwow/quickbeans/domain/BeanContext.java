@@ -3,6 +3,7 @@ package cn.schoolwow.quickbeans.domain;
 import cn.schoolwow.quickbeans.annotation.ScopeType;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**Bean信息*/
@@ -19,6 +20,8 @@ public class BeanContext {
     public Method method;
     /**初始化方法*/
     public Method initMethod;
+    /**定时任务方法*/
+    public List<Method> scheduledMethodList = new ArrayList<>();
     /**销毁方法*/
     public Method destroyMethod;
     /**依赖是否已注入*/

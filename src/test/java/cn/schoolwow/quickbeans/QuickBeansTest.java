@@ -66,4 +66,13 @@ public class QuickBeansTest {
         SignerHolder signerHolder = quickBeans.getBean(SignerHolder.class);
         Assert.assertEquals(true,signerHolder.signerList!=null);
     }
+
+    @Test
+    public void testScheduled() throws Exception{
+        QuickBeans quickBeans = new QuickBeans();
+        quickBeans.scan("cn.schoolwow.quickbeans.service");
+        quickBeans.refresh();
+
+        Thread.sleep(300000);
+    }
 }
