@@ -98,6 +98,15 @@ public class QuickBeans {
         return beanNameList;
     }
 
+    /**获取容器中所有类*/
+    public List<Class> getBeanClassList(){
+        List<Class> classList = new ArrayList<>();
+        for(BeanContext beanContext:beanContextList){
+            classList.add(beanContext._class);
+        }
+        return classList;
+    }
+
     /**依赖注入*/
     public void refresh(){
         try {
