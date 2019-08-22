@@ -8,10 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -263,70 +260,68 @@ public class QuickBeans {
             if(resource==null){
                 continue;
             }
-            BeanContext injectBeanContext = null;
-            String name = resource.name();
-            if(!name.isEmpty()){
-                injectBeanContext = getBeanContext(name);
-            }
-            if(injectBeanContext==null){
-                injectBeanContext = getBeanContext(field.getName());
-            }
-            if(injectBeanContext==null){
-                injectBeanContext = getBeanContext(field.getType().getName());
-            }
-            if(injectBeanContext==null){
-                throw new IllegalArgumentException("无法找到依赖!类名:"+c.getName()+",依赖:"+field.getName());
-            }
+            BeanContext beanContext = getBeanContext(instance.getClass().getName());
             //刷新状态下忽略原型模式成员变量
-            if(isRefresh&&injectBeanContext.scopeType.equals(ScopeType.prototype)){
+            if(isRefresh&&beanContext!=null&&beanContext.scopeType.equals(ScopeType.prototype)){
                 continue;
             }
-            //单例模式且值为null或者原型模式时创建实例
-            if((injectBeanContext.scopeType.equals(ScopeType.singleton)&&field.get(instance)==null
-            )||injectBeanContext.scopeType.equals(ScopeType.prototype)){
-                Object bean = null;
-                if(field.getType().isArray()||field.getType().getName().equals("java.util.List")){
-                    //先根据resource定义的name
-                    String resourceName = resource.name();
-                    if(!resourceName.isEmpty()){
-                        bean = doGetBeanList(resourceName);
+
+            if(field.getType().isArray()||field.getType().getName().equals("java.util.List")){
+                List<Object> bean = null;
+                //先根据resource定义的name
+                String resourceName = resource.name();
+                if(!resourceName.isEmpty()){
+                    bean = doGetBeanList(resourceName);
+                }
+                //根据成员变量名
+                if(bean==null||bean.size()==0){
+                    resourceName = field.getName();
+                    bean = doGetBeanList(resourceName);
+                }
+                //根据类型名
+                if(bean==null||bean.size()==0){
+                    Type type = field.getGenericType();
+                    if(type instanceof ParameterizedType){
+                        ParameterizedType pType = (ParameterizedType)type;
+                        Type claz = pType.getActualTypeArguments()[0];
+                        if(claz instanceof Class){
+                            resourceName = ((Class) claz).getName();
+                            bean = doGetBeanList(resourceName);
+                        }
                     }
-                    //根据成员变量名
-                    if(bean==null){
-                        resourceName = field.getName();
-                        bean = doGetBeanList(resourceName);
-                    }
-                    //根据类型名
-                    if(bean==null){
-                        resourceName = field.getType().getName();
-                        bean = doGetBeanList(resourceName);
-                    }
+                }
+                if(bean!=null&&bean.size()>0){
                     if(field.getType().isArray()){
-                        List<Object> objectList = (List<Object>) bean;
-                        bean = objectList.toArray(new Object[0]);
+                        Object[] objects = bean.toArray(new Object[0]);
+                        field.set(instance,objects);
+                    }else{
+                        field.set(instance,bean);
                     }
                 }else{
-                    //先根据resource定义的name
-                    String resourceName = resource.name();
-                    if(!resourceName.isEmpty()){
-                        bean = doGetBean(resourceName);
-                    }
-                    //根据成员变量名
-                    if(bean==null){
-                        resourceName = field.getName();
-                        bean = doGetBean(resourceName);
-                    }
-                    //根据类型名
-                    if(bean==null){
-                        resourceName = field.getType().getName();
-                        bean = doGetBean(resourceName);
-                    }
-                }
-                if(bean==null){
                     throw new IllegalArgumentException("依赖为空!类名:"+c.getName()+",依赖:"+field.getName());
                 }
-                logger.debug("[依赖注入]类名:{},成员变量:{}",c.getName(),field.getName());
-                field.set(instance,bean);
+            }else{
+                //先根据resource定义的name
+                Object bean = null;
+                String resourceName = resource.name();
+                if(!resourceName.isEmpty()){
+                    bean = doGetBean(resourceName);
+                }
+                //根据成员变量名
+                if(bean==null){
+                    resourceName = field.getName();
+                    bean = doGetBean(resourceName);
+                }
+                //根据类型名
+                if(bean==null){
+                    resourceName = field.getType().getName();
+                    bean = doGetBean(resourceName);
+                }
+                if(bean!=null){
+                    field.set(instance,bean);
+                }else{
+                    throw new IllegalArgumentException("依赖为空!类名:"+c.getName()+",依赖:"+field.getName());
+                }
             }
         }
     }
@@ -393,7 +388,7 @@ public class QuickBeans {
         }
         Method[] methods = c.getDeclaredMethods();
         for(Method method:methods){
-            if(beanContext.initMethod==null&&method.getAnnotation(PostConstruct.class)!=null){
+            if(method.getAnnotation(PostConstruct.class)!=null){
                 beanContext.initMethod = method;
             }
             Scheduled scheduled = method.getDeclaredAnnotation(Scheduled.class);

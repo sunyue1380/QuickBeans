@@ -3,6 +3,7 @@ package cn.schoolwow.quickbeans;
 import cn.schoolwow.quickbeans.config.BeanConfig;
 import cn.schoolwow.quickbeans.entity.Talk;
 import cn.schoolwow.quickbeans.entity.User;
+import cn.schoolwow.quickbeans.handler.Handler;
 import cn.schoolwow.quickbeans.signer.SignerHolder;
 import org.junit.Assert;
 import org.junit.Test;
@@ -74,5 +75,15 @@ public class QuickBeansTest {
         quickBeans.refresh();
 
         Thread.sleep(300000);
+    }
+
+    @Test
+    public void testBeanList() throws Exception{
+        QuickBeans quickBeans = new QuickBeans();
+        quickBeans.scan("cn.schoolwow.quickbeans.handler");
+        quickBeans.refresh();
+
+        List<Handler> handlerList = quickBeans.getBeanList(Handler.class);
+        System.out.println(handlerList);
     }
 }
