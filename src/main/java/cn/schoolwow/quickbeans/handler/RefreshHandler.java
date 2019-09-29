@@ -2,6 +2,8 @@ package cn.schoolwow.quickbeans.handler;
 
 import cn.schoolwow.quickbeans.annotation.*;
 import cn.schoolwow.quickbeans.domain.BeanContext;
+import cn.schoolwow.quickbeans.test.QuickBeansJUnit4ClassRunner;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,17 @@ import java.lang.reflect.Method;
 /**容器刷新类*/
 public class RefreshHandler {
     private Logger logger = LoggerFactory.getLogger(RefreshHandler.class);
+    private static boolean inTest = false;
+    static{
+        try {
+            Class.forName("org.junit.runner.RunWith");
+            inTest = true;
+        } catch (ClassNotFoundException e) {
+            inTest = false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private GetBeanHandler getBeanHandler;
     private Registerable registerable;
 
@@ -47,7 +60,14 @@ public class RefreshHandler {
     private void handleComponent(BeanContext beanContext){
         Component component = (Component) beanContext.clazz.getDeclaredAnnotation(Component.class);
         if(null==component){
-            return;
+            if(inTest){
+                RunWith runWith = (RunWith) beanContext.clazz.getAnnotation(RunWith.class);
+                if(!QuickBeansJUnit4ClassRunner.class.getName().equals(runWith.value().getName())){
+                    return;
+                }
+            }else{
+                return;
+            }
         }
         Scope scope = (Scope) beanContext.clazz.getDeclaredAnnotation(Scope.class);
         if(null!=scope){
@@ -63,12 +83,14 @@ public class RefreshHandler {
                 beanContext.scheduledMethodList.add(method);
             }
         }
-        Class[] classes = beanContext.clazz.getInterfaces();
-        if(!component.name().isEmpty()){
+        if(null!=component&&!component.name().isEmpty()){
             beanContext.nameList.add(component.name());
         }
-        for(Class _class:classes){
-            beanContext.nameList.add(_class.getName());
+        Class[] classes = beanContext.clazz.getInterfaces();
+        if(null!=classes){
+            for(Class _class:classes){
+                beanContext.nameList.add(_class.getName());
+            }
         }
         beanContext.nameList.add(beanContext.clazz.getName());
         getBeanHandler.instantiation(beanContext);
@@ -112,12 +134,14 @@ public class RefreshHandler {
     /**处理ComponentScan注解*/
     private void handleComponentScan(BeanContext beanContext) {
         ComponentScan componentScan = (ComponentScan) beanContext.clazz.getAnnotation(ComponentScan.class);
-        if(null==componentScan){
+        if(null==componentScan||beanContext.hasComponentScaned){
             return;
         }
         registerable.scan(componentScan.basePackages());
         registerable.register(componentScan.basePackageClasses());
+        beanContext.hasComponentScaned = true;
         refresh(false);
+
 //        logger.debug("[handleComponentScan]类名:{}",beanContext.clazz.getName());
     }
 }

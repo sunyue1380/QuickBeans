@@ -32,4 +32,6 @@ public class BeanContext {
     public boolean hasRegistered;
     /**依赖是否已注入*/
     public boolean hasInject;
+    /**是否已经解析过ComponentScan*/
+    public boolean hasComponentScaned;
 }

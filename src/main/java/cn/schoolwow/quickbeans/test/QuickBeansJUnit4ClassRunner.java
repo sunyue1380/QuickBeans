@@ -13,6 +13,7 @@ public class QuickBeansJUnit4ClassRunner extends BlockJUnit4ClassRunner {
         QuickBeans quickBeans = new QuickBeans();
         Class c = this.getTestClass().getJavaClass();
         quickBeans.register(c);
+        quickBeans.refresh();
         return quickBeans.getBean(c.getName());
     }
 }

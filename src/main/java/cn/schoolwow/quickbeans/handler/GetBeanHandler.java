@@ -159,7 +159,7 @@ public class GetBeanHandler implements GetBean{
             if(ignorePrototype&&beanContext.scopeType.equals(ScopeType.prototype)){
                 continue;
             }
-            if(null!=field.getType().getComponentType()){
+            if(field.getType().isArray()||field.getType().getName().startsWith("java.util")){
                 Collection beanList = null;
                 //先根据resource定义的name
                 String resourceName = resource.name();
@@ -181,6 +181,8 @@ public class GetBeanHandler implements GetBean{
                             resourceName = ((Class) claz).getName();
                             beanList = getBeanList(resourceName);
                         }
+                    }else{
+                        beanList = getBeanList(type.getTypeName().substring(0,type.getTypeName().length()-2));
                     }
                 }
                 if(null!=beanList&&!beanList.isEmpty()){
