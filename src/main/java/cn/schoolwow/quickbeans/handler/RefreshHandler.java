@@ -100,10 +100,19 @@ public class RefreshHandler {
     /**处理Bean注解*/
     private void handleBean(BeanContext beanContext){
         Method[] methods = beanContext.clazz.getDeclaredMethods();
+        Class clazz = beanContext.clazz;
         for(Method method:methods){
             Bean bean = method.getDeclaredAnnotation(Bean.class);
             if(null==bean){
                 continue;
+            }
+            beanContext = new BeanContext();
+            beanContext.beanClazz = clazz;
+            beanContext.clazz = method.getReturnType();
+            if(getBeanHandler.getBeanContextMap().containsKey(beanContext.clazz.getName())){
+                continue;
+            }else{
+                getBeanHandler.getBeanContextMap().put(beanContext.clazz.getName(),beanContext);
             }
             beanContext.method = method;
             Scope scope = method.getDeclaredAnnotation(Scope.class);

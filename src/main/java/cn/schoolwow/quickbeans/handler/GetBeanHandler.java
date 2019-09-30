@@ -115,9 +115,9 @@ public class GetBeanHandler implements GetBean{
                     }
                 }
                 if(parameters.length>0){
-                    beanContext.instance = beanContext.method.invoke(beanContext.clazz.newInstance(),parameterValues);
+                    beanContext.instance = beanContext.method.invoke(beanContext.beanClazz.newInstance(),parameterValues);
                 }else{
-                    beanContext.instance = beanContext.method.invoke(beanContext.clazz.newInstance());
+                    beanContext.instance = beanContext.method.invoke(beanContext.beanClazz.newInstance());
                 }
             }else if(null!=beanContext.clazz){
                 if(null==beanContext.constructArguments){
@@ -159,7 +159,8 @@ public class GetBeanHandler implements GetBean{
             if(ignorePrototype&&beanContext.scopeType.equals(ScopeType.prototype)){
                 continue;
             }
-            if(field.getType().isArray()||field.getType().getName().startsWith("java.util")){
+            if(field.getType().isArray()||field.getType().getName().equals("java.util.List")
+                    ||field.getType().getName().equals("java.util.Set")){
                 Collection beanList = null;
                 //先根据resource定义的name
                 String resourceName = resource.name();

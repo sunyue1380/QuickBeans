@@ -20,6 +20,8 @@ public class BeanContext {
     public Object instance;
     /**所在类*/
     public Class clazz;
+    /**Bean注解所在类*/
+    public Class beanClazz;
     /**Bean注解所在方法*/
     public Method method;
     /**初始化方法*/
