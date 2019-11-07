@@ -131,7 +131,7 @@ public class GetBeanHandler implements GetBean{
                 }
             }
             beanContext.hasRegistered = true;
-            logger.debug("[实例化]类名:{}",beanContext.clazz.getName());
+            logger.trace("[实例化]类名:{}",beanContext.clazz.getName());
         }catch (Exception e){
             e.printStackTrace();
             logger.error("[实例化失败]类名:{},构造参数:{}",beanContext.clazz.getName(),beanContext.constructArguments);
@@ -224,7 +224,7 @@ public class GetBeanHandler implements GetBean{
             }
         }
         beanContext.hasInject = true;
-        logger.debug("[注入依赖]类名:{}",beanContext.clazz.getName());
+        logger.trace("[注入依赖]类名:{}",beanContext.clazz.getName());
     }
 
     /**初始化*/
@@ -238,7 +238,7 @@ public class GetBeanHandler implements GetBean{
                 e.printStackTrace();
             }
         }
-        logger.debug("[初始化]类名:{},名称:{}",beanContext.clazz.getName(),beanContext.nameList);
+        logger.trace("[初始化]类名:{},名称:{}",beanContext.clazz.getName(),beanContext.nameList);
         if(!beanContext.scopeType.equals(ScopeType.singleton)){
             return;
         }

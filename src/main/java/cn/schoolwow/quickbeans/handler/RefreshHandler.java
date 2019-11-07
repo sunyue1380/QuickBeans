@@ -62,7 +62,7 @@ public class RefreshHandler {
         if(null==component){
             if(inTest){
                 RunWith runWith = (RunWith) beanContext.clazz.getAnnotation(RunWith.class);
-                if(!QuickBeansJUnit4ClassRunner.class.getName().equals(runWith.value().getName())){
+                if(null==runWith||!QuickBeansJUnit4ClassRunner.class.getName().equals(runWith.value().getName())){
                     return;
                 }
             }else{
