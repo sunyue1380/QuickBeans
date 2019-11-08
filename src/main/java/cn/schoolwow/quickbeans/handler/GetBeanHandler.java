@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class GetBeanHandler implements GetBean{
     private Logger logger = LoggerFactory.getLogger(GetBeanHandler.class);
 
-    private Map<String,BeanContext> beanContextMap = new HashMap<>();
+    private Map<String,BeanContext> beanContextMap;
     private ScheduledExecutorService scheduledPool = Executors.newSingleThreadScheduledExecutor();
 
     public GetBeanHandler(Map<String,BeanContext> beanContextMap){

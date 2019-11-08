@@ -6,9 +6,10 @@ import cn.schoolwow.quickbeans.handler.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class QuickBeans implements Registerable,GetBean {
-    private final Map<String,BeanContext> beanContextMap = new HashMap<>();
+    private final Map<String,BeanContext> beanContextMap = new ConcurrentHashMap<>();
     private GetBeanHandler getBeanHandler = new GetBeanHandler(beanContextMap);
     private Registerable registerable = new RegisterHandler(beanContextMap);
     private RefreshHandler refreshHandler = new RefreshHandler(getBeanHandler,registerable);
