@@ -51,6 +51,8 @@ public class RefreshHandler {
                     continue;
                 }
                 getBeanHandler.inject(beanContext,true);
+            }
+            for(BeanContext beanContext:getBeanHandler.getBeanContextMap().values()){
                 getBeanHandler.initialize(beanContext);
             }
         }
