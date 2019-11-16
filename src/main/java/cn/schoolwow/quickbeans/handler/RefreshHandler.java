@@ -96,7 +96,6 @@ public class RefreshHandler {
         }
         beanContext.nameList.add(beanContext.clazz.getName());
         getBeanHandler.instantiation(beanContext);
-//        logger.debug("[handleComponent]类名:{}",beanContext.clazz.getName());
     }
 
     /**处理Bean注解*/
@@ -138,7 +137,6 @@ public class RefreshHandler {
             beanContext.nameList.add(method.getName());
             beanContext.nameList.add(method.getReturnType().getName());
             getBeanHandler.instantiation(beanContext);
-//            logger.debug("[handleBean]类名:{}",beanContext.clazz.getName());
         }
     }
 
@@ -152,7 +150,5 @@ public class RefreshHandler {
         registerable.register(componentScan.basePackageClasses());
         beanContext.hasComponentScaned = true;
         refresh(false);
-
-//        logger.debug("[handleComponentScan]类名:{}",beanContext.clazz.getName());
     }
 }
