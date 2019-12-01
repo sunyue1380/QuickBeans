@@ -115,9 +115,9 @@ public class GetBeanHandler implements GetBean{
                     }
                 }
                 if(parameters.length>0){
-                    beanContext.instance = beanContext.method.invoke(beanContext.beanClazz.newInstance(),parameterValues);
+                    beanContext.instance = beanContext.method.invoke(beanContext.beanInstance,parameterValues);
                 }else{
-                    beanContext.instance = beanContext.method.invoke(beanContext.beanClazz.newInstance());
+                    beanContext.instance = beanContext.method.invoke(beanContext.beanInstance);
                 }
             }else if(null!=beanContext.clazz){
                 if(null==beanContext.constructArguments){

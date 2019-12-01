@@ -108,7 +108,18 @@ public class RefreshHandler {
                 continue;
             }
             beanContext = new BeanContext();
-            beanContext.beanClazz = clazz;
+            Object beanInstance = getBeanHandler.getBean(clazz);
+            if(null==beanInstance){
+                try {
+                    beanInstance = clazz.newInstance();
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                registerable.registerBean(clazz,beanInstance);
+            }
+            beanContext.beanInstance = beanInstance;
             beanContext.clazz = method.getReturnType();
             if(getBeanHandler.getBeanContextMap().containsKey(beanContext.clazz.getName())){
                 continue;

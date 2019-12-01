@@ -8,7 +8,7 @@ import org.junit.Test;
 public class ComponentScanTest {
 
     @Test
-    public void testComponent(){
+    public void testComponent() throws InterruptedException {
         QuickBeans quickBeans = new QuickBeans();
         quickBeans.register(BeanScanner.class);
         quickBeans.refresh();
@@ -16,5 +16,6 @@ public class ComponentScanTest {
         BeanService beanService1 = quickBeans.getBean(BeanService.class);
         BeanService beanService2 = quickBeans.getBean("myBeanService",BeanService.class);
         Assert.assertEquals(true,beanService1==beanService2);
+        Thread.sleep(100000l);
     }
 }
