@@ -121,10 +121,10 @@ public class RefreshHandler {
             }
             beanContext.beanInstance = beanInstance;
             beanContext.clazz = method.getReturnType();
-            if(getBeanHandler.getBeanContextMap().containsKey(beanContext.clazz.getName())){
+            if(getBeanHandler.getBeanContextMap().containsKey(beanContext.clazz.getName()+"_"+method.getName())){
                 continue;
             }else{
-                getBeanHandler.getBeanContextMap().put(beanContext.clazz.getName(),beanContext);
+                getBeanHandler.getBeanContextMap().put(beanContext.clazz.getName()+"_"+method.getName(),beanContext);
             }
             beanContext.method = method;
             Scope scope = method.getDeclaredAnnotation(Scope.class);
