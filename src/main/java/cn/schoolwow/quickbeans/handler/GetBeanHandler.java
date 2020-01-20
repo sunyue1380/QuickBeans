@@ -5,6 +5,7 @@ import cn.schoolwow.quickbeans.annotation.ScopeType;
 import cn.schoolwow.quickbeans.domain.BeanContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.rmi.runtime.Log;
 
 import javax.annotation.Resource;
 import java.lang.reflect.*;
@@ -144,7 +145,13 @@ public class GetBeanHandler implements GetBean{
      * @param ignorePrototype 是否忽略原型模式变量
      * */
     public void inject(BeanContext beanContext,boolean ignorePrototype) {
-        Field[] fields = beanContext.clazz.getDeclaredFields();
+        Class superClass = beanContext.clazz;
+        List<Field> fieldList = new ArrayList<>();
+        while(null!=superClass){
+            fieldList.addAll(Arrays.asList(superClass.getDeclaredFields()));
+            superClass = superClass.getSuperclass();
+        }
+        Field[] fields = fieldList.toArray(new Field[0]);
         Field.setAccessible(fields,true);
         for(Field field:fields){
             int modifiers = field.getModifiers();
